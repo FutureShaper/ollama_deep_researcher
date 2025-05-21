@@ -4,32 +4,17 @@ from datetime import datetime
 def get_current_date():
     return datetime.now().strftime("%B %d, %Y")
 
-query_writer_instructions="""Your goal is to generate a targeted web search query.
-
-<CONTEXT>
-Current date: {current_date}
-Please ensure your queries account for the most current information available as of this date.
-</CONTEXT>
-
-<TOPIC>
-{research_topic}
-</TOPIC>
-
-<FORMAT>
-Format your response as a JSON object with ALL three of these exact keys:
-   - "query": The actual search query string
-   - "rationale": Brief explanation of why this query is relevant
-</FORMAT>
-
-<EXAMPLE>
-Example output:
-{{
-    "query": "machine learning transformer architecture explained",
-    "rationale": "Understanding the fundamental structure of transformer models"
-}}
-</EXAMPLE>
-
-Provide your response in JSON format:"""
+query_writer_instructions = (
+    "You are an expert research assistant.\n"
+    "Given the following research topic, generate a single, clear web search query as a JSON object.\n"
+    "Respond ONLY with a JSON object with a 'query' key. Do not include any other text.\n"
+    "\n"
+    "Research Topic: {research_topic}\n"
+    "\n"
+    "Example: {{\n  \"query\": \"how to prepare for a colonoscopy\"\n}}\n"
+    "\n"
+    "Current date: {current_date}\n"
+)
 
 summarizer_instructions="""
 <GOAL>
@@ -47,9 +32,9 @@ When EXTENDING an existing summary:
 3. For each piece of new information:                                                                             
     a. If it's related to existing points, integrate it into the relevant paragraph.                               
     b. If it's entirely new but relevant, add a new paragraph with a smooth transition.                            
-    c. If it's not relevant to the user topic, skip it.                                                            
-4. Ensure all additions are relevant to the user's topic.                                                         
-5. Verify that your final output differs from the input summary.                                                                                                                                                            
+    c. If it's not relevant to the user topic, skip it.                                                             
+4. Ensure all additions are relevant to the user's topic.                                                          
+5. Verify that your final output differs from the input summary.                                                                                                                                                             
 < /REQUIREMENTS >
 
 < FORMATTING >

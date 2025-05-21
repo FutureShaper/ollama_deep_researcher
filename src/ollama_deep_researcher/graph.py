@@ -6,6 +6,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
 from langgraph.graph import START, END, StateGraph
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_ollama.embeddings import OllamaEmbeddings
 
 from ollama_deep_researcher.configuration import Configuration, SearchAPI
 from ollama_deep_researcher.utils import deduplicate_and_format_sources, format_sources, duckduckgo_search, strip_thinking_tokens, get_config_value
@@ -26,6 +29,10 @@ def generate_query(state: SummaryState, config: RunnableConfig):
     Returns:
         Dictionary with state update, including search_query key containing the generated query
     """
+
+    # Ensure research_topic is set
+    if not state.research_topic or not state.research_topic.strip():
+        raise ValueError("research_topic must be provided and non-empty for query generation.")
 
     # Format the prompt
     current_date = get_current_date()
@@ -53,16 +60,20 @@ def generate_query(state: SummaryState, config: RunnableConfig):
     # Get the content
     content = result.content
 
-    # Parse the JSON response and get the query
+    # Debug: return the raw LLM output for debugging
     try:
         query = json.loads(content)
-        search_query = query['query']
-    except (json.JSONDecodeError, KeyError):
+        search_query = query.get('query')
+        # Fallback: if query is None, try to extract a string from the whole response
+        if not search_query or search_query in ('{}', None, "null"):
+            # Final fallback: use the research topic itself
+            search_query = state.research_topic
+    except (json.JSONDecodeError, KeyError, ValueError):
         # If parsing fails or the key is not found, use a fallback query
         if configurable.strip_thinking_tokens:
             content = strip_thinking_tokens(content)
-        search_query = content
-    return {"search_query": search_query}
+        search_query = state.research_topic  # Final fallback
+    return {"search_query": search_query, "llm_raw_output": content}
 
 def web_research(state: SummaryState, config: RunnableConfig):
     """LangGraph node that performs web research using the generated search query.
@@ -101,6 +112,36 @@ def web_research(state: SummaryState, config: RunnableConfig):
         raise ValueError(f"Unsupported search API: {configurable.search_api}")
 
     return {"sources_gathered": [format_sources(search_results)], "research_loop_count": state.research_loop_count + 1, "web_research_results": [search_str]}
+
+def local_rag(state: SummaryState, config: RunnableConfig):
+    """LangGraph node that performs local RAG using ChromaDB.
+    Retrieves relevant documents from a local Chroma vector store based on the current search query.
+    Returns a list of retrieved documents as 'local_rag_results'.
+    """
+    # Set up embedding function (adjust as needed)
+    configurable = Configuration.from_runnable_config(config)
+    embedding_function = OllamaEmbeddings(
+        base_url=configurable.ollama_base_url,
+        model=configurable.local_llm
+    )
+    # Initialize Chroma vector store (persisted locally)
+    persist_directory = "./chroma_langchain_db"
+    collection_name = "deep_research_collection"
+    vector_store = Chroma(
+        collection_name=collection_name,
+        embedding_function=embedding_function,
+        persist_directory=persist_directory
+    )
+    # Perform similarity search
+    query = state.search_query
+    print(f"[local_rag] search_query: {query}")
+    results = vector_store.similarity_search(query, k=3)
+    print(f"[local_rag] Retrieved {len(results)} results:")
+    for i, doc in enumerate(results):
+        print(f"  [{i+1}] {doc.page_content}")
+    # Format results for downstream use
+    rag_texts = [doc.page_content for doc in results]
+    return {"local_rag_results": rag_texts}
 
 def summarize_sources(state: SummaryState, config: RunnableConfig):
     """LangGraph node that summarizes web research results.
@@ -259,6 +300,7 @@ def route_research(state: SummaryState, config: RunnableConfig) -> Literal["fina
 builder = StateGraph(SummaryState, input=SummaryStateInput, output=SummaryStateOutput, config_schema=Configuration)
 builder.add_node("generate_query", generate_query)
 builder.add_node("web_research", web_research)
+builder.add_node("local_rag", local_rag)
 builder.add_node("summarize_sources", summarize_sources)
 builder.add_node("reflect_on_summary", reflect_on_summary)
 builder.add_node("finalize_summary", finalize_summary)
@@ -266,7 +308,8 @@ builder.add_node("finalize_summary", finalize_summary)
 # Add edges
 builder.add_edge(START, "generate_query")
 builder.add_edge("generate_query", "web_research")
-builder.add_edge("web_research", "summarize_sources")
+builder.add_edge("web_research", "local_rag")
+builder.add_edge("local_rag", "summarize_sources")
 builder.add_edge("summarize_sources", "reflect_on_summary")
 builder.add_conditional_edges("reflect_on_summary", route_research)
 builder.add_edge("finalize_summary", END)

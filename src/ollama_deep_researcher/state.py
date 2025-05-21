@@ -13,7 +13,7 @@ class SummaryState:
 
 @dataclass(kw_only=True)
 class SummaryStateInput:
-    research_topic: str = field(default=None) # Report topic     
+    research_topic: str  # Report topic (required)
 
 @dataclass(kw_only=True)
 class SummaryStateOutput:
