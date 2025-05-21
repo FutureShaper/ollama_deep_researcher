@@ -115,6 +115,45 @@ Give the assistant a topic for research, and you can visualize its process!
 
 <img width="1621" alt="Screenshot 2025-01-24 at 10 08 22 PM" src="https://github.com/user-attachments/assets/4de6bd89-4f3b-424c-a9cb-70ebd3d45c5f" />
 
+---
+
+## 🧠 Local RAG (Retrieval-Augmented Generation) with ChromaDB
+
+This project supports local RAG using [ChromaDB](https://www.trychroma.com/) as a vector database. You can ingest your own documents and enable the agent to retrieve relevant chunks during research.
+
+### Ingesting Documents
+
+Use the provided script to add your own documents to the local ChromaDB vector store:
+
+```bash
+conda activate ollama-deep-researcher
+python ingest_to_chroma.py
+```
+
+This will split your document (e.g., `program_release_management.txt`) into paragraphs and add them to the vector store using Ollama embeddings.
+
+### Testing Local RAG Node
+
+You can test the local RAG retrieval node directly without running the full agent:
+
+```bash
+PYTHONPATH=src python test_local_rag.py
+```
+
+This will show the generated search query and the top retrieved document chunks from your local vector store.
+
+### Running the Full Agent from a Python Script
+
+You can run the entire research workflow (LangGraph) from a script:
+
+```bash
+PYTHONPATH=src python run_graph.py
+```
+
+This will execute the full agent, including query generation, web search, local RAG, summarization, and reflection, and print the final summary.
+
+---
+
 ### Model Compatibility Note
 
 When selecting a local LLM, set steps use structured JSON output. Some models may have difficulty with this requirement, and the assistant has fallback mechanisms to handle this. As an example, the [DeepSeek R1 (7B)](https://ollama.com/library/deepseek-llm:7b) and [DeepSeek R1 (1.5B)](https://ollama.com/library/deepseek-r1:1.5b) models have difficulty producing required JSON output, and the assistant will use a fallback mechanism to handle this.

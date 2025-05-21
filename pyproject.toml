@@ -1,7 +1,7 @@
 [project]
 name = "ollama-deep-researcher"
 version = "0.0.1"
-description = "Fully local web research and summarization assistant with Ollama and LangGraph."
+description = "Fully local web research, RAG, and summarization assistant with Ollama and LangGraph."
 authors = [
     { name = "Lance Martin" }
 ]
@@ -20,6 +20,8 @@ dependencies = [
     "httpx>=0.28.1",
     "markdownify>=0.11.0",
     "python-dotenv==1.0.1",
+    "chromadb>=0.4.24",
+    "langchain-chroma>=0.1.0",
 ]
 
 [project.optional-dependencies]
