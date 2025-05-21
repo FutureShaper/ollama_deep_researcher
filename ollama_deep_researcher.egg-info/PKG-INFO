@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: ollama-deep-researcher
 Version: 0.0.1
-Summary: Fully local web research and summarization assistant with Ollama and LangGraph.
+Summary: Fully local web research, RAG, and summarization assistant with Ollama and LangGraph.
 Author: Lance Martin
 License: MIT
 Requires-Python: >=3.9
@@ -17,6 +17,8 @@ Requires-Dist: langchain_openai>=0.3.9
 Requires-Dist: httpx>=0.28.1
 Requires-Dist: markdownify>=0.11.0
 Requires-Dist: python-dotenv==1.0.1
+Requires-Dist: chromadb>=0.4.24
+Requires-Dist: langchain-chroma>=0.1.0
 Provides-Extra: dev
 Requires-Dist: mypy>=1.11.1; extra == "dev"
 Requires-Dist: ruff>=0.6.1; extra == "dev"
@@ -45,9 +47,14 @@ cp .env.example .env
 
 1. Download the Ollama app for Mac [here](https://ollama.com/download).
 
-2. Pull a local LLM from [Ollama](https://ollama.com/search). As an [example](https://ollama.com/library/deepseek-r1:8b):
+2. Pull a local LLM from [Ollama](https://ollama.com/search). For example, to use the Qwen3 14B model:
 ```shell
-ollama pull qwen3:latest
+ollama pull qwen3:14b
+```
+
+3. To use a specific model, set the LOCAL_LLM environment variable in your `.env` file:
+```shell
+LOCAL_LLM=qwen3:14b
 ```
 
 ### Selecting search tool
@@ -68,17 +75,16 @@ FETCH_FULL_PAGE=xxx # fetch the full page content (with `duckduckgo`), defaults 
 #### Mac
 
 1. (Recommended) Create a virtual environment:
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+conda create -n ollama-deep-researcher python=3.11
 ```
 
 2. Launch LangGraph server:
 
 ```bash
-# Install uv package manager
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev
+conda activate ollama-deep-researcher # in case you are using conda; ollama-deep-researcher is the conda environment name
+langgraph dev
 ```
 
 #### Windows
@@ -133,6 +139,45 @@ Open `LangGraph Studio Web UI` via the URL above. In the `configuration` tab, yo
 Give the assistant a topic for research, and you can visualize its process!
 
 <img width="1621" alt="Screenshot 2025-01-24 at 10 08 22 PM" src="https://github.com/user-attachments/assets/4de6bd89-4f3b-424c-a9cb-70ebd3d45c5f" />
+
+---
+
+## 🧠 Local RAG (Retrieval-Augmented Generation) with ChromaDB
+
+This project supports local RAG using [ChromaDB](https://www.trychroma.com/) as a vector database. You can ingest your own documents and enable the agent to retrieve relevant chunks during research.
+
+### Ingesting Documents
+
+Use the provided script to add your own documents to the local ChromaDB vector store:
+
+```bash
+conda activate ollama-deep-researcher
+python ingest_to_chroma.py
+```
+
+This will split your document (e.g., `program_release_management.txt`) into paragraphs and add them to the vector store using Ollama embeddings.
+
+### Testing Local RAG Node
+
+You can test the local RAG retrieval node directly without running the full agent:
+
+```bash
+PYTHONPATH=src python test_local_rag.py
+```
+
+This will show the generated search query and the top retrieved document chunks from your local vector store.
+
+### Running the Full Agent from a Python Script
+
+You can run the entire research workflow (LangGraph) from a script:
+
+```bash
+PYTHONPATH=src python run_graph.py
+```
+
+This will execute the full agent, including query generation, web search, local RAG, summarization, and reflection, and print the final summary.
+
+---
 
 ### Model Compatibility Note
 

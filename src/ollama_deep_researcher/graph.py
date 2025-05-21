@@ -141,62 +141,51 @@ def local_rag(state: SummaryState, config: RunnableConfig):
         print(f"  [{i+1}] {doc.page_content}")
     # Format results for downstream use
     rag_texts = [doc.page_content for doc in results]
+    # Persist results in state for UI visibility
+    state.local_rag_results = rag_texts
     return {"local_rag_results": rag_texts}
 
 def summarize_sources(state: SummaryState, config: RunnableConfig):
-    """LangGraph node that summarizes web research results.
-    
-    Uses an LLM to create or update a running summary based on the newest web research 
-    results, integrating them with any existing summary.
-    
-    Args:
-        state: Current graph state containing research topic, running summary,
-              and web research results
-        config: Configuration for the runnable, including LLM provider settings
-        
-    Returns:
-        Dictionary with state update, including running_summary key containing the updated summary
+    """LangGraph node that summarizes web research and local RAG results.
+    Uses an LLM to create or update a running summary based on the newest web and local RAG results.
     """
+    # Combine web and local RAG results for summarization
+    combined_context = []
+    if state.web_research_results:
+        combined_context.extend(state.web_research_results)
+    if state.local_rag_results:
+        combined_context.extend(state.local_rag_results)
+    if not combined_context:
+        combined_context = ["No context available."]
 
-    # Existing summary
     existing_summary = state.running_summary
+    most_recent_context = combined_context[-1]
 
-    # Most recent web research
-    most_recent_web_research = state.web_research_results[-1]
-
-    # Build the human message
     if existing_summary:
         human_message_content = (
             f"<Existing Summary> \n {existing_summary} \n <Existing Summary>\n\n"
-            f"<New Context> \n {most_recent_web_research} \n <New Context>"
+            f"<New Context> \n {most_recent_context} \n <New Context>"
             f"Update the Existing Summary with the New Context on this topic: \n <User Input> \n {state.research_topic} \n <User Input>\n\n"
         )
     else:
         human_message_content = (
-            f"<Context> \n {most_recent_web_research} \n <Context>"
+            f"<Context> \n {most_recent_context} \n <Context>"
             f"Create a Summary using the Context on this topic: \n <User Input> \n {state.research_topic} \n <User Input>\n\n"
         )
 
-    # Run the LLM
     configurable = Configuration.from_runnable_config(config)
-    
-    # Default to Ollama
     llm = ChatOllama(
         base_url=configurable.ollama_base_url, 
         model=configurable.local_llm, 
         temperature=0
     )
-    
-    result = llm.invoke(
-        [SystemMessage(content=summarizer_instructions),
-        HumanMessage(content=human_message_content)]
-    )
-
-    # Strip thinking tokens if configured
+    result = llm.invoke([
+        SystemMessage(content=summarizer_instructions),
+        HumanMessage(content=human_message_content)
+    ])
     running_summary = result.content
     if configurable.strip_thinking_tokens:
         running_summary = strip_thinking_tokens(running_summary)
-
     return {"running_summary": running_summary}
 
 def reflect_on_summary(state: SummaryState, config: RunnableConfig):

@@ -9,6 +9,8 @@ langchain_openai>=0.3.9
 httpx>=0.28.1
 markdownify>=0.11.0
 python-dotenv==1.0.1
+chromadb>=0.4.24
+langchain-chroma>=0.1.0
 
 [dev]
 mypy>=1.11.1

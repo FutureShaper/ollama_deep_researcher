@@ -10,6 +10,7 @@ class SummaryState:
     sources_gathered: Annotated[list, operator.add] = field(default_factory=list) 
     research_loop_count: int = field(default=0) # Research loop count
     running_summary: str = field(default=None) # Final report
+    local_rag_results: Annotated[list, operator.add] = field(default_factory=list)  # Ensure this is present
 
 @dataclass(kw_only=True)
 class SummaryStateInput:
