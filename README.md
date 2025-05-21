@@ -22,9 +22,14 @@ cp .env.example .env
 
 1. Download the Ollama app for Mac [here](https://ollama.com/download).
 
-2. Pull a local LLM from [Ollama](https://ollama.com/search). As an [example](https://ollama.com/library/deepseek-r1:8b):
+2. Pull a local LLM from [Ollama](https://ollama.com/search). For example, to use the Qwen3 14B model:
 ```shell
-ollama pull qwen3:latest
+ollama pull qwen3:14b
+```
+
+3. To use a specific model, set the LOCAL_LLM environment variable in your `.env` file:
+```shell
+LOCAL_LLM=qwen3:14b
 ```
 
 ### Selecting search tool
@@ -45,17 +50,16 @@ FETCH_FULL_PAGE=xxx # fetch the full page content (with `duckduckgo`), defaults 
 #### Mac
 
 1. (Recommended) Create a virtual environment:
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+conda create -n ollama-deep-researcher python=3.11
 ```
 
 2. Launch LangGraph server:
 
 ```bash
-# Install uv package manager
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev
+conda activate ollama-deep-researcher # in case you are using conda; ollama-deep-researcher is the conda environment name
+langgraph dev
 ```
 
 #### Windows
