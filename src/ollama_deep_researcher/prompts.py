@@ -73,15 +73,15 @@ When creating a NEW summary:
 1. Highlight the most relevant information related to the user topic from the search results
 2. Ensure a coherent flow of information
 
-When EXTENDING an existing summary:                                                                                                                 
+When EXTENDING an existing summary:                                                                                                                  
 1. Read the existing summary and new search results carefully.                                                    
-2. Compare the new information with the existing summary.                                                         
+2. Compare the new information with the existing summary.                                                        
 3. For each piece of new information:                                                                             
     a. If it's related to existing points, integrate it into the relevant paragraph.                               
     b. If it's entirely new but relevant, add a new paragraph with a smooth transition.                            
     c. If it's not relevant to the user topic, skip it.                                                             
 4. Ensure all additions are relevant to the user's topic.                                                          
-5. Verify that your final output differs from the input summary.                                                                                                                                                             
+5. Verify that your final output differs from the input summary.                                                                                                                                                              
 < /REQUIREMENTS >
 
 < FORMATTING >
@@ -113,10 +113,10 @@ Format your response as a JSON object with these exact keys:
 
 <Task>
 Reflect carefully on the Summary to identify knowledge gaps and produce a follow-up query. Then, produce your output following this JSON format:
-{
+{{
     "knowledge_gap": "The summary lacks information about performance metrics and benchmarks",
     "follow_up_query": "What are typical performance benchmarks and metrics used to evaluate [specific technology]?"
-}
+}}
 </Task>
 
 Provide your analysis in JSON format:"""

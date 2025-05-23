@@ -1,6 +1,7 @@
 """
 Run the full LangGraph research agent from a Python script.
 """
+import dotenv; dotenv.load_dotenv()
 from ollama_deep_researcher.graph import graph
 from ollama_deep_researcher.state import SummaryStateInput
 

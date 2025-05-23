@@ -487,27 +487,19 @@ def finalize_summary(state: SummaryState):
 
 def route_research(state: SummaryState, config: RunnableConfig) -> Literal["finalize_summary", "decide_tool_usage"]:
     print("\n[LangGraph] Entering node: route_research")
-    print(f"[LangGraph] Current state: {{'node_visits': {getattr(state, 'node_visits', None)}}}")
+    print(f"[LangGraph] Current state: {{'research_loop_count': {getattr(state, 'research_loop_count', None)}}}")
     """LangGraph routing function that determines the next step in the research flow.
-    
     Controls the research loop by deciding whether to continue gathering information
     or to finalize the summary based on the configured maximum number of iterations.
-    
-    Args:
-        state: Current graph state containing node visit counts
-        config: Configuration for the runnable, including max_total_iterations setting
-        
-    Returns:
-        String literal indicating the next node to visit ("decide_tool_usage" or "finalize_summary")
     """
-    # Check if the iteration limit has been reached for decide_tool_usage
-    if not track_node_visit(state, "decide_tool_usage", config):
-        print("[Research Router] Max iterations reached, finalizing summary")
-        return "finalize_summary"
-    
-    # Continue research since we haven't hit the iteration limit
     configurable = Configuration.from_runnable_config(config)
-    print(f"[Research Router] Continuing research (iteration {state.node_visits.get('decide_tool_usage', 1)}/{configurable.max_total_iterations})")
+    max_iterations = configurable.max_total_iterations
+    current_loop = getattr(state, 'research_loop_count', 0)
+    print(f"[DEBUG] route_research: research_loop_count={current_loop}, max_iterations={max_iterations}")
+    if current_loop >= max_iterations:
+        print("[Research Router] Max research iterations reached, finalizing summary")
+        return "finalize_summary"
+    print(f"[Research Router] Continuing research (iteration {current_loop+1}/{max_iterations})")
     return "decide_tool_usage"
 
 def route_to_tools(state: SummaryState) -> Literal["web_search_only", "local_rag_only", "both_tools"]:
@@ -608,6 +600,7 @@ def check_tool_results(state: SummaryState, config: RunnableConfig) -> Literal["
     configurable = Configuration.from_runnable_config(config)
     max_iterations = configurable.max_total_iterations
     current_loop = getattr(state, 'research_loop_count', 0)
+    print(f"[DEBUG] research_loop_count={current_loop}, max_iterations={max_iterations}")
     if current_loop >= max_iterations:
         print(f"[Result Check] Max total research iterations ({max_iterations}) reached, proceeding with current results")
         return "continue"
@@ -654,7 +647,7 @@ def check_tool_results(state: SummaryState, config: RunnableConfig) -> Literal["
         result_text = response.content.strip().lower()
         
         # Simple check for the decision
-        if "retry" in result_text:
+        if "retry" in result_text and current_loop < max_iterations:
             print("[Result Check] Results not satisfactory, retrying with different tools")
             return "retry_tools"
         else:

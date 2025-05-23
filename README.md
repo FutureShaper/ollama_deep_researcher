@@ -153,6 +153,21 @@ You can run the entire research workflow (LangGraph) from a script:
 PYTHONPATH=src python run_graph.py
 ```
 
+At the top of your main script (e.g., `run_graph.py`), add:
+
+```python
+import dotenv; dotenv.load_dotenv()
+```
+This ensures that environment variables from your `.env` file are loaded automatically before any configuration is read.
+
+You do **not** need to manually export environment variables in your shell. Just edit `.env` and run your script as usual:
+
+```sh
+python run_graph.py
+```
+
+The value of `MAX_TOTAL_ITERATIONS` and other settings in `.env` will now be respected by the agent.
+
 This will execute the full agent, including query generation, web search, local RAG, summarization, and reflection, and print the final summary.
 
 ---
