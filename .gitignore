@@ -1,4 +1,4 @@
 chroma_langchain_db/
 .langgraph_api/
 src/ollama_deep_researcher/__pycache__/
-.env/
+.env
