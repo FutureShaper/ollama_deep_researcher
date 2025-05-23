@@ -150,6 +150,8 @@ tool_documents = [
 
 # Nodes
 def generate_query(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: generate_query")
+    print(f"[LangGraph] Current state: {{'research_topic': {getattr(state, 'research_topic', None)}, 'search_query': {getattr(state, 'search_query', None)}}}")
     """LangGraph node that generates a search query based on the research topic.
     
     Uses an LLM to create an optimized search query for web research based on
@@ -209,6 +211,8 @@ def generate_query(state: SummaryState, config: RunnableConfig):
     return {"search_query": search_query, "llm_raw_output": content}
 
 def decide_tool_usage(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: decide_tool_usage")
+    print(f"[LangGraph] Current state: {{'search_query': {getattr(state, 'search_query', None)}, 'selected_tools': {getattr(state, 'selected_tools', None)}}}")
     """LangGraph node that decides which research tools to use based on the query.
     
     Uses a hybrid approach combining vector similarity search and LLM reasoning to select
@@ -275,6 +279,8 @@ def decide_tool_usage(state: SummaryState, config: RunnableConfig):
     return {"selected_tools": vector_selected_tools, "tool_rationale": "Selected based on query similarity to tool descriptions"}
 
 def web_research(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: web_research")
+    print(f"[LangGraph] Current state: {{'search_query': {getattr(state, 'search_query', None)}, 'research_loop_count': {getattr(state, 'research_loop_count', None)}}}")
     """Core implementation node for web search functionality.
     
     This is a CORE IMPLEMENTATION NODE that is not directly connected in the graph structure.
@@ -316,6 +322,8 @@ def web_research(state: SummaryState, config: RunnableConfig):
     return {"sources_gathered": [format_sources(search_results)], "research_loop_count": state.research_loop_count + 1, "web_research_results": [search_str]}
 
 def local_rag(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: local_rag")
+    print(f"[LangGraph] Current state: {{'search_query': {getattr(state, 'search_query', None)}}}")
     """Core implementation node for local RAG functionality.
     
     This is a CORE IMPLEMENTATION NODE that is not directly connected in the graph structure.
@@ -352,6 +360,8 @@ def local_rag(state: SummaryState, config: RunnableConfig):
     return {"local_rag_results": rag_texts}
 
 def summarize_sources(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: summarize_sources")
+    print(f"[LangGraph] Current state: {{'running_summary': {getattr(state, 'running_summary', None)}, 'web_research_results': {getattr(state, 'web_research_results', None)}, 'local_rag_results': {getattr(state, 'local_rag_results', None)}}}")
     """LangGraph node that summarizes web research and local RAG results.
     Uses an LLM to create or update a running summary based on the newest web and local RAG results.
     """
@@ -395,6 +405,8 @@ def summarize_sources(state: SummaryState, config: RunnableConfig):
     return {"running_summary": running_summary}
 
 def reflect_on_summary(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: reflect_on_summary")
+    print(f"[LangGraph] Current state: {{'running_summary': {getattr(state, 'running_summary', None)}}}")
     """LangGraph node that identifies knowledge gaps and generates follow-up queries.
     
     Analyzes the current summary to identify areas for further research and generates
@@ -441,6 +453,8 @@ def reflect_on_summary(state: SummaryState, config: RunnableConfig):
         return {"search_query": f"Tell me more about {state.research_topic}"}
         
 def finalize_summary(state: SummaryState):
+    print("\n[LangGraph] Entering node: finalize_summary")
+    print(f"[LangGraph] Current state: {{'running_summary': {getattr(state, 'running_summary', None)}, 'sources_gathered': {getattr(state, 'sources_gathered', None)}}}")
     """LangGraph node that finalizes the research summary.
     
     Prepares the final output by deduplicating and formatting sources, then
@@ -472,6 +486,8 @@ def finalize_summary(state: SummaryState):
     return {"running_summary": state.running_summary}
 
 def route_research(state: SummaryState, config: RunnableConfig) -> Literal["finalize_summary", "decide_tool_usage"]:
+    print("\n[LangGraph] Entering node: route_research")
+    print(f"[LangGraph] Current state: {{'node_visits': {getattr(state, 'node_visits', None)}}}")
     """LangGraph routing function that determines the next step in the research flow.
     
     Controls the research loop by deciding whether to continue gathering information
@@ -495,6 +511,8 @@ def route_research(state: SummaryState, config: RunnableConfig) -> Literal["fina
     return "decide_tool_usage"
 
 def route_to_tools(state: SummaryState) -> Literal["web_search_only", "local_rag_only", "both_tools"]:
+    print("\n[LangGraph] Entering node: route_to_tools")
+    print(f"[LangGraph] Current state: {{'selected_tools': {getattr(state, 'selected_tools', None)}}}")
     """LangGraph routing function that determines which tool(s) to use.
     
     Routes the flow based on the tools selected in the decide_tool_usage node.
@@ -520,6 +538,8 @@ def route_to_tools(state: SummaryState) -> Literal["web_search_only", "local_rag
         return "both_tools"
 
 def execute_tools(state: SummaryState, config: RunnableConfig):
+    print("\n[LangGraph] Entering node: execute_tools")
+    print(f"[LangGraph] Current state: {{'selected_tools': {getattr(state, 'selected_tools', None)}, 'research_loop_count': {getattr(state, 'research_loop_count', None)}}}")
     """Execute all selected tools dynamically based on state.selected_tools.
     
     This unified node replaces the web_search_only, local_rag_only, and both_tools pattern
@@ -570,6 +590,8 @@ def execute_tools(state: SummaryState, config: RunnableConfig):
 
 # Add feedback loop function to check if results are satisfactory
 def check_tool_results(state: SummaryState, config: RunnableConfig) -> Literal["continue", "retry_tools"]:
+    print("\n[LangGraph] Entering node: check_tool_results")
+    print(f"[LangGraph] Current state: {{'web_research_results': {getattr(state, 'web_research_results', None)}, 'local_rag_results': {getattr(state, 'local_rag_results', None)}}}")
     """Check if the tool execution results are satisfactory or need different tools.
     
     Uses an LLM to evaluate if the current tool results are satisfactory or if
@@ -582,9 +604,12 @@ def check_tool_results(state: SummaryState, config: RunnableConfig) -> Literal["
     Returns:
         Decision to continue with summarization or retry with different tools
     """
-    # Check if we've reached the maximum number of iterations for decide_tool_usage
-    if not track_node_visit(state, "retry_tools", config):
-        print("[Result Check] Max total iterations reached, proceeding with current results")
+    # Enforce global research loop limit ONLY
+    configurable = Configuration.from_runnable_config(config)
+    max_iterations = configurable.max_total_iterations
+    current_loop = getattr(state, 'research_loop_count', 0)
+    if current_loop >= max_iterations:
+        print(f"[Result Check] Max total research iterations ({max_iterations}) reached, proceeding with current results")
         return "continue"
     
     # Get the most recent research results
@@ -614,7 +639,6 @@ def check_tool_results(state: SummaryState, config: RunnableConfig) -> Literal["
     """
     
     # Invoke the LLM
-    configurable = Configuration.from_runnable_config(config)
     llm = ChatOllama(
         base_url=configurable.ollama_base_url,
         model=configurable.local_llm,
