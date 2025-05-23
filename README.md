@@ -41,8 +41,11 @@ Optionally, update the `.env` file with the following search tool configuration 
 If set, these values will take precedence over the defaults set in the `Configuration` class in `configuration.py`. 
 ```shell
 SEARCH_API=xxx # the search API to use, such as `duckduckgo` (default)
-MAX_WEB_RESEARCH_LOOPS=xxx # the maximum number of research loop steps, defaults to `3`
+MAX_TOTAL_ITERATIONS=xxx # the global maximum iterations for any node in the graph, defaults to `10`
 FETCH_FULL_PAGE=xxx # fetch the full page content (with `duckduckgo`), defaults to `false`
+
+# Deprecated parameters:
+# MAX_WEB_RESEARCH_LOOPS is no longer used. Please use MAX_TOTAL_ITERATIONS instead.
 ```
 
 ### Running with LangGraph Studio

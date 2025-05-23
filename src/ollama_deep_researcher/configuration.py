@@ -13,8 +13,14 @@ class Configuration(BaseModel):
 
     max_web_research_loops: int = Field(
         default=3,
-        title="Research Depth",
-        description="Number of research iterations to perform"
+        title="Research Depth (Deprecated)",
+        description="Deprecated: Use max_total_iterations instead. This will be removed in a future version."
+    )
+    
+    max_total_iterations: int = Field(
+        default=10,
+        title="Maximum Total Iterations",
+        description="Global maximum for any node to be revisited in the graph. Controls all loop behaviors."
     )
     local_llm: str = Field(
         default="qwen3:14b",
